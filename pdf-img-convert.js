@@ -27,10 +27,7 @@ const isURL = require('is-url');
 const pdfjs = require('pdfjs-dist/legacy/build/pdf.js');
 const Canvas = require("canvas");
 const assert = require("assert").strict;
-const fs = require("fs");
 const util = require('util');
-
-const readFile = util.promisify(fs.readFile);
 
 function NodeCanvasFactory() {}
 NodeCanvasFactory.prototype = {
@@ -79,10 +76,6 @@ module.exports.convert = async function (pdf, conversion_config = {}) {
     else if (/pdfData:pdf\/([a-zA-Z]*);base64,([^"]*)/.test(pdf)) {
       pdfData = new Uint8Array(Buffer.from(pdf.split(',')[1], 'base64'));
     }
-    // Support for filepath input
-    else {
-      pdfData = new Uint8Array(await readFile(pdf));
-    }
   }
   // Support for buffer input
   else if (Buffer.isBuffer(pdf)) {
@@ -112,11 +105,7 @@ module.exports.convert = async function (pdf, conversion_config = {}) {
       // This just pushes a render of the page to the array
       let currentPage = await doc_render(pdfDocument, conversion_config.page_numbers[i], canvasFactory, conversion_config);
       if (currentPage != null) {
-        // This allows for base64 conversion of output images
-        if (conversion_config.base64)
-          outputPages.push(currentPage.toString('base64'));
-        else
-          outputPages.push(new Uint8Array(currentPage));
+        outputPages.push(currentPage.toString('base64'));
       }
     }
   // Otherwise just loop the whole doc
@@ -124,11 +113,7 @@ module.exports.convert = async function (pdf, conversion_config = {}) {
     for (let i = 1; i <= pdfDocument.numPages; i++) {
       let currentPage = await doc_render(pdfDocument, i, canvasFactory, conversion_config)
       if (currentPage != null) {
-        // This allows for base64 conversion of output images
-        if (conversion_config.base64)
-          outputPages.push(currentPage.toString('base64'));
-        else
-          outputPages.push(new Uint8Array(currentPage));
+        outputPages.push(currentPage.toString('base64'));
       }
     }
 
@@ -178,8 +163,7 @@ async function doc_render(pdfDocument, pageNo, canvasFactory, conversion_config)
 
   let renderTask = await page.render(renderContext).promise;
 
-  // Convert the canvas to an image buffer.
-  let image = canvasAndContext.canvas.toBuffer();
+  let image = await canvasAndContext.canvas.toDataURL('image/png');
 
   return image;
 } // doc_render
