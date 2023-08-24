@@ -27,7 +27,8 @@ const isURL = require('is-url');
 const pdfjs = require('pdfjs-dist/legacy/build/pdf.js');
 const Canvas = require("canvas");
 const assert = require("assert").strict;
-const util = require('util');
+
+pdfjs.GlobalWorkerOptions.workerSrc = '//unpkg.com/pdfjs-dist@2.16.105/legacy/build/pdf.worker.min.js';
 
 function NodeCanvasFactory() {}
 NodeCanvasFactory.prototype = {
